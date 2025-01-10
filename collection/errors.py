@@ -1,9 +1,16 @@
-class SetError(Exception):
-    def __init__(self, message: str = "", e: Exception | None = None) -> None:
-        built_message = "write error:"
-        if message != "":
-            built_message = f"{built_message} {message}"
-        if e is not None:
-            built_message = f"{built_message}: {e}"
+from shared.error_helpers.wrapper import ExceptionWrapper
 
-        super().__init__(built_message)
+
+class SetError(ExceptionWrapper):
+    def __init__(self, e: Exception | None = None) -> None:
+        super().__init__("set value error", e)
+
+
+class GetError(ExceptionWrapper):
+    def __init__(self, e: Exception | None = None) -> None:
+        super().__init__("get value error", e)
+
+
+class DeleteError(ExceptionWrapper):
+    def __init__(self, e: Exception | None = None) -> None:
+        super().__init__("delete value error", e)

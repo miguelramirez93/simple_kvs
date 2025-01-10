@@ -1,5 +1,6 @@
 from typing import Any
-from collection.errors import SetError
+import json
+from collection.errors import DeleteError, GetError, SetError
 from collection.item import Item
 from storage.storage import Storage
 
@@ -12,12 +13,21 @@ class ReadWriter:
 
     def set(self, collection: str, key: str, value: Any):
         try:
-            self._storage_client.write(collection, key, value)
+            self._storage_client.write(collection, key, bytes(value))
         except Exception as e:
             raise SetError(e=e)
 
     def get(self, collection: str, key: str) -> Item:
-        raise NotImplementedError
+        try:
+            item_bytes = self._storage_client.get(collection, key)
+            item_json_str = item_bytes.decode()
+            item: Item = json.loads(item_json_str)
+            return item
+        except Exception as e:
+            raise GetError(e)
 
     def delete(self, collection: str, key: str):
-        self._storage_client.delete(collection, key)
+        try:
+            self._storage_client.delete(collection, key)
+        except Exception as e:
+            raise DeleteError(e)
