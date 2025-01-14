@@ -6,7 +6,7 @@ from dataclasses import dataclass
 class Metadata:
     created_at: datetime.datetime
     last_update_at: datetime.datetime
-    version: str
+    version: int
 
 
 @dataclass
