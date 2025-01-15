@@ -9,15 +9,16 @@ from shared.date.clock import ClockReader, DateTimeReader
 
 class ReadWriter:
     _storage_client: Storage
-    _clock_reader: ClockReader
+    _clock_reader: ClockReader = DateTimeReader()
 
     def __init__(
         self,
         storage_cli_impl: Storage,
-        clock_reader_impl: ClockReader = DateTimeReader(),
+        clock_reader_impl: ClockReader | None = None,
     ) -> None:
         self._storage_client = storage_cli_impl
-        self._clock_reader = clock_reader_impl
+        if clock_reader_impl is not None:
+            self._clock_reader = clock_reader_impl
 
     def set(self, collection: str, key: str, value: Any):
         try:

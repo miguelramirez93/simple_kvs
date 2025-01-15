@@ -3,7 +3,7 @@ import abc
 
 class Storage(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def write(self, container: str, key: str, data: bytes):
+    def write(self, container: str, key: str, data: bytes) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -11,5 +11,5 @@ class Storage(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, container: str, key: str):
+    def delete(self, container: str, key: str) -> None:
         raise NotImplementedError
