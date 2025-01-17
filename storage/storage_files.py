@@ -22,7 +22,7 @@ class FilesStorage(Storage):
             with open(f"{container_path}/{key}", "w+b") as key_file:
                 _ = key_file.write(data)
         except Exception as e:
-            raise WriteError(e) 
+            raise WriteError(e)
 
     @override
     def get(self, container: str, key: str) -> bytes:
@@ -37,7 +37,7 @@ class FilesStorage(Storage):
             with open(key_path, "rb") as key_file:
                 return key_file.read()
         except Exception as e:
-            raise ReadError(e) 
+            raise ReadError(e)
 
     @override
     def delete(self, container: str, key: str):

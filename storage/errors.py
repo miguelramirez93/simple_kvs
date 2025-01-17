@@ -10,6 +10,7 @@ class WriteError(ExceptionWrapper):
     def __init__(self, e: Exception | None = None) -> None:
         super().__init__("storage write error", e)
 
+
 class ReadError(ExceptionWrapper):
     def __init__(self, e: Exception | None = None) -> None:
         super().__init__("storage read error", e)
