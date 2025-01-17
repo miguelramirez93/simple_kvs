@@ -1,6 +1,6 @@
 import os
 from typing import override
-from storage.errors import ContainerNotFoundError
+from storage.errors import ContainerNotFoundError, WriteError
 from storage.storage import Storage
 
 
@@ -14,12 +14,15 @@ class FilesStorage(Storage):
 
     @override
     def write(self, container: str, key: str, data: bytes):
-        container_path = self._get_container_path(container)
-        if not os.path.exists(container_path):
-            os.makedirs(container_path)
+        try:
+            container_path = self._get_container_path(container)
+            if not os.path.exists(container_path):
+                os.makedirs(container_path)
 
-        with open(f"{container_path}/{key}", "w+b") as key_file:
-            _ = key_file.write(data)
+            with open(f"{container_path}/{key}", "w+b") as key_file:
+                _ = key_file.write(data)
+        except Exception as e:
+            raise WriteError(e) 
 
     @override
     def get(self, container: str, key: str) -> bytes:

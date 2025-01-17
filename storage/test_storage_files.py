@@ -1,24 +1,34 @@
 import shutil
-from unittest import TestCase
+from unittest import TestCase, mock
 from storage.storage_files import FilesStorage
+from storage.errors import WriteError
 
 class TestFilesStorage(TestCase):
     _expected_files_path = "./test_data"
     _expected_container_name = "container_test"
+    _expected_file_content = '{"foo": "bar"}'
 
+    def setUp(self):
+        self.file_storage = FilesStorage(self._expected_files_path)
+ 
     def test_should_write_data_in_key_file(self):
-        file_storage = FilesStorage(self._expected_files_path)
-        file_storage.write(self._expected_container_name, "key", '{"foo": "bar"}'.encode())
-        try:
+        m = mock.mock_open()
+        with mock.patch("builtins.open", m, create=True):
+            self.file_storage.write(self._expected_container_name, "key", self._expected_file_content)
 
-            with open(f"{self._expected_files_path}/{self._expected_container_name}/key") as target:
-                self.assertEqual(target.read(), '{"foo": "bar"}')
-        except FileNotFoundError as e:
-            self.fail(f"file was not written as expected: {e}")
-        except Exception as e:
-            self.fail(f"unexpected exception has occurred: {e}")
-        finally:
-            shutil.rmtree(f"{self._expected_files_path}")
+            m.assert_called_once_with(f"{self._expected_files_path}/{self._expected_container_name}/key", "w+b")
+            handle = m()
+            handle.write.assert_called_once_with(self._expected_file_content)
+
+
+    def test_should_rise_write_error(self):
+        m = mock.mock_open()
+        with mock.patch("builtins.open", m, create=True ) as mocked_open:
+            mocked_open.side_effect = IOError()
+            with self.assertRaises(WriteError):
+                self.file_storage.write(self._expected_container_name, "key", '{"foo": "bar"}'.encode())
+
+
 
 
 
