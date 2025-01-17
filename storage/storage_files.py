@@ -1,6 +1,6 @@
 import os
 from typing import override
-from storage.errors import ContainerNotFoundError, WriteError
+from storage.errors import ContainerNotFoundError, WriteError, ReadError
 from storage.storage import Storage
 
 
@@ -26,15 +26,18 @@ class FilesStorage(Storage):
 
     @override
     def get(self, container: str, key: str) -> bytes:
-        container_path = self._get_container_path(container)
+        try:
+            container_path = self._get_container_path(container)
 
-        if not os.path.exists(container_path):
-            raise ContainerNotFoundError(container)
+            if not os.path.exists(container_path):
+                raise ContainerNotFoundError(container)
 
-        key_path = f"{container_path}/{key}"
+            key_path = f"{container_path}/{key}"
 
-        with open(key_path, "rb") as key_file:
-            return key_file.read()
+            with open(key_path, "rb") as key_file:
+                return key_file.read()
+        except Exception as e:
+            raise ReadError(e) 
 
     @override
     def delete(self, container: str, key: str):
