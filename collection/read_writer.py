@@ -1,6 +1,6 @@
 import json
 from typing import Any
-from collection.errors import DeleteError, GetError, SetError
+from collection.errors import DeleteError, GetError, CreateError
 from collection.item import Item, Metadata
 from shared.encode.json import JsonEncoder
 from storage.storage import Storage
@@ -22,19 +22,26 @@ class ReadWriter:
 
     def set(self, collection: str, key: str, value: Any):
         try:
+            self._create_item(collection, key, value)
+        except Exception as e:
+            raise SetError(e)
+
+    def _create_item(self, collection: str, key: str, value: Any):
+        try:
             now = self._clock_reader.now()
             item = Item(key, value, Metadata(now, now, 1))
             item_bytes = JsonEncoder.encode(item.__dict__)
             self._storage_client.write(collection, key, item_bytes)
         except Exception as e:
-            raise SetError(e)
+            raise CreateError(e)
 
     def get(self, collection: str, key: str) -> Item:
         try:
             item_bytes = self._storage_client.get(collection, key)
             item_json_str = item_bytes.decode()
-            item: Item = json.loads(item_json_str)
-            return item
+            item_dict = json.loads(item_json_str)
+            item_dict["meta"] = Metadata(**item_dict["meta"])
+            return Item(**item_dict)
         except Exception as e:
             raise GetError(e)
 
