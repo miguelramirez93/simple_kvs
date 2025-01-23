@@ -14,3 +14,8 @@ class WriteError(ExceptionWrapper):
 class ReadError(ExceptionWrapper):
     def __init__(self, e: Exception | None = None) -> None:
         super().__init__("storage read error", e)
+
+
+class DataNotFoundError(Exception):
+    def __init__(self) -> None:
+        super().__init__("key not found")

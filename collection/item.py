@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -12,5 +13,5 @@ class Metadata:
 @dataclass
 class Item:
     key: str
-    value: str
+    value: Any
     meta: Metadata

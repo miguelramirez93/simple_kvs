@@ -1,6 +1,6 @@
 import os
 from typing import override
-from storage.errors import ContainerNotFoundError, WriteError, ReadError
+from storage.errors import ContainerNotFoundError, WriteError, ReadError, DataNotFoundError
 from storage.storage import Storage
 
 
@@ -36,17 +36,24 @@ class FilesStorage(Storage):
 
             with open(key_path, "rb") as key_file:
                 return key_file.read()
+        except FileNotFoundError:
+            raise DataNotFoundError()
         except Exception as e:
             raise ReadError(e)
 
     @override
     def delete(self, container: str, key: str):
-        container_path = self._get_container_path(container)
-        if not os.path.exists(container_path):
-            raise ContainerNotFoundError(container)
+        try:
+            container_path = self._get_container_path(container)
+            if not os.path.exists(container_path):
+                raise ContainerNotFoundError(container)
 
-        key_path = f"{container_path}/{key}"
-        os.remove(key_path)
+            key_path = f"{container_path}/{key}"
+            os.remove(key_path)
+        except FileNotFoundError:
+            raise DataNotFoundError()
+        except Exception as e:
+            raise DeleteError(e)
 
     def _get_container_path(self, container: str) -> str:
         return f"{self._data_path}/{container}"
