@@ -35,7 +35,8 @@ class ReadWriter:
     def _create_item(self, collection: str, key: str, value: Any):
         try:
             now = self._clock_reader.now()
-            item = Item(key, value, Metadata(now, now, 1))
+            item = Item(key, value, Metadata(now.strftime(
+                "%m/%d/%Y, %H:%M:%S"), now.strftime("%m/%d/%Y, %H:%M:%S"), 1))
             item_bytes = JsonEncoder.encode(item.__dict__)
             self._storage_client.write(collection, key, item_bytes)
         except Exception as e:
@@ -45,8 +46,8 @@ class ReadWriter:
         try:
             now = self._clock_reader.now()
             old_item.meta.version += 1
-            old_item.meta.created_at = now
-            old_item.meta.last_update_at = now
+            old_item.meta.created_at = now.strftime("%m/%d/%Y, %H:%M:%S")
+            old_item.meta.last_update_at = now.strftime("%m/%d/%Y, %H:%M:%S")
             old_item.value = value
             item_bytes = JsonEncoder.encode(old_item.__dict__)
             self._storage_client.write(collection, key, item_bytes)

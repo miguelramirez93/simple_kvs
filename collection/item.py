@@ -5,8 +5,8 @@ from typing import Any
 
 @dataclass
 class Metadata:
-    created_at: datetime.datetime
-    last_update_at: datetime.datetime
+    created_at: str
+    last_update_at: str
     version: int
 
 

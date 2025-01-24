@@ -1,3 +1,4 @@
+from typing import override
 from unittest import TestCase, mock
 from storage.storage import Storage
 from storage.errors import DataNotFoundError
@@ -8,13 +9,14 @@ from collection.errors import GetError, SetError, KeyNotFoundError
 
 
 class TestReadWriter(TestCase):
-    _storage_cli: Storage
-    _clock_reader: ClockReader
+    _storage_cli: Storage = Storage()
+    _clock_reader: ClockReader = ClockReader()
 
-    _expected_read_item = Item("foo", "bar", Metadata(
+    _expected_read_item: Item = Item("foo", "bar", Metadata(
         "fake-date-time", "fake-date-time", 1))
-    _expected_key_value_bytes = b'{"key": "foo", "value": "bar", "meta": {"created_at": "fake-date-time", "last_update_at": "fake-date-time", "version": 1}}'
+    _expected_key_value_bytes: bytes = b'{"key": "foo", "value": "bar", "meta": {"created_at": "fake-date-time", "last_update_at": "fake-date-time", "version": 1}}'
 
+    @override
     def setUp(self):
         self._storage_cli = Storage()
         self._clock_reader = ClockReader()
@@ -36,7 +38,7 @@ class TestReadWriter(TestCase):
         read_writer = ReadWriter(self._storage_cli)
 
         with self.assertRaises(GetError):
-            item_found = read_writer.get("data", "foo")
+            _ = read_writer.get("data", "foo")
             self._storage_cli.get.assert_called_once_with("data", "foo")
 
     def test_should_return_none_if_no_such_key_in_storage(self):
@@ -96,9 +98,11 @@ class TestReadWriter(TestCase):
 
         with self.assertRaises(SetError):
             read_writer.set("data", "foo", "doe")
-            self._storage_cli.get.assert_called_once_with("data", "foo")
-            self._storage_cli.write.assert_called_once_with(
-                "data", "foo", expectedWrittenBytes)
+
+        expectedWrittenBytes = b'{"key": "foo", "value": "doe", "meta": {"created_at": "fake-date-time-2", "last_update_at": "fake-date-time-2", "version": 2}}'
+        self._storage_cli.get.assert_called_once_with("data", "foo")
+        self._storage_cli.write.assert_called_once_with(
+            "data", "foo", expectedWrittenBytes)
 
     def test_should_delete_key_value(self):
         self._storage_cli.delete = mock.MagicMock()
