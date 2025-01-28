@@ -52,7 +52,6 @@ class ReadWriter:
         try:
             now = self._clock_reader.now()
             old_item.meta.version += 1
-            old_item.meta.created_at = now.strftime("%m/%d/%Y, %H:%M:%S")
             old_item.meta.last_update_at = now.strftime("%m/%d/%Y, %H:%M:%S")
             old_item.value = value
             item_bytes = JsonEncoder.encode(old_item.__dict__)

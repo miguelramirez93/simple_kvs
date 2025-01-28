@@ -6,15 +6,20 @@ from shared.date.clock import ClockReader
 from collection.read_writer import ReadWriter
 from collection.item import Item, Metadata
 from collection.errors import GetError, SetError, KeyNotFoundError
+import datetime
 
 
 class TestReadWriter(TestCase):
     _storage_cli: Storage = Storage()
     _clock_reader: ClockReader = ClockReader()
 
+    _expected_date_time: datetime.datetime = datetime.datetime(2020, 5, 17)
+    _expected_date_time_str: str = _expected_date_time.strftime(
+        "%m/%d/%Y, %H:%M:%S")
     _expected_read_item: Item = Item("foo", "bar", Metadata(
-        "fake-date-time", "fake-date-time", 1))
-    _expected_key_value_bytes: bytes = b'{"key": "foo", "value": "bar", "meta": {"created_at": "fake-date-time", "last_update_at": "fake-date-time", "version": 1}}'
+        _expected_date_time_str, _expected_date_time_str, 1))
+
+    _expected_key_value_bytes: bytes = b'{"key": "foo", "value": "bar", "meta": {"created_at": "05/17/2020, 00:00:00", "last_update_at": "05/17/2020, 00:00:00", "version": 1}}'
 
     @override
     def setUp(self):
@@ -57,30 +62,29 @@ class TestReadWriter(TestCase):
         self._storage_cli.get = mock.MagicMock()
         self._storage_cli.get.side_effect = DataNotFoundError()
         self._storage_cli.write = mock.MagicMock()
-        self._clock_reader.now = mock.MagicMock(return_value="fake-date-time")
+        self._clock_reader.now = mock.MagicMock(
+            return_value=self._expected_date_time)
 
         read_writer = ReadWriter(self._storage_cli, self._clock_reader)
 
         read_writer.set("data", "foo", "bar")
 
-        expectedWrittenBytes = b'{"key": "foo", "value": "bar", "meta": {"created_at": "fake-date-time", "last_update_at": "fake-date-time", "version": 1}}'
-
         self._storage_cli.get.assert_called_once_with("data", "foo")
         self._storage_cli.write.assert_called_once_with(
-            "data", "foo", expectedWrittenBytes)
+            "data", "foo", self._expected_key_value_bytes)
 
     def test_should_set_existent_value_if_key_found_in_storage(self):
         self._storage_cli.get = mock.MagicMock(
             return_value=self._expected_key_value_bytes)
         self._storage_cli.write = mock.MagicMock()
         self._clock_reader.now = mock.MagicMock(
-            return_value="fake-date-time-2")
+            return_value=datetime.datetime(2020, 6, 17))
 
         read_writer = ReadWriter(self._storage_cli, self._clock_reader)
 
         read_writer.set("data", "foo", "doe")
 
-        expectedWrittenBytes = b'{"key": "foo", "value": "doe", "meta": {"created_at": "fake-date-time-2", "last_update_at": "fake-date-time-2", "version": 2}}'
+        expectedWrittenBytes = b'{"key": "foo", "value": "doe", "meta": {"created_at": "05/17/2020, 00:00:00", "last_update_at": "06/17/2020, 00:00:00", "version": 2}}'
 
         self._storage_cli.get.assert_called_once_with("data", "foo")
         self._storage_cli.write.assert_called_once_with(
@@ -92,14 +96,14 @@ class TestReadWriter(TestCase):
         self._storage_cli.write = mock.MagicMock()
         self._storage_cli.write.side_effect = Exception("fake")
         self._clock_reader.now = mock.MagicMock(
-            return_value="fake-date-time-2")
+            return_value=datetime.datetime(2020, 6, 17))
 
         read_writer = ReadWriter(self._storage_cli, self._clock_reader)
 
         with self.assertRaises(SetError):
             read_writer.set("data", "foo", "doe")
 
-        expectedWrittenBytes = b'{"key": "foo", "value": "doe", "meta": {"created_at": "fake-date-time-2", "last_update_at": "fake-date-time-2", "version": 2}}'
+        expectedWrittenBytes = b'{"key": "foo", "value": "doe", "meta": {"created_at": "05/17/2020, 00:00:00", "last_update_at": "06/17/2020, 00:00:00", "version": 2}}'
         self._storage_cli.get.assert_called_once_with("data", "foo")
         self._storage_cli.write.assert_called_once_with(
             "data", "foo", expectedWrittenBytes)
