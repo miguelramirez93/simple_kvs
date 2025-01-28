@@ -29,3 +29,8 @@ class DeleteError(ExceptionWrapper):
 class KeyNotFoundError(Exception):
     def __init__(self, key: str) -> None:
         super().__init__(f"key {key} not found")
+
+
+class CreateCollectionError(ExceptionWrapper):
+    def __init__(self, e: Exception | None = None) -> None:
+        super().__init__("create collection error", e)

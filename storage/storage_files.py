@@ -13,6 +13,15 @@ class FilesStorage(Storage):
         self._data_path = data_path
 
     @override
+    def create_container(self, container: str) -> None:
+        try:
+            container_path = self._get_container_path(container)
+            if not os.path.exists(container_path):
+                os.makedirs(container_path)
+        except Exception as e:
+            raise WriteError(e)
+
+    @override
     def write(self, container: str, key: str, data: bytes):
         try:
             container_path = self._get_container_path(container)

@@ -17,6 +17,17 @@ class AddItemRequest(BaseModel):
     value: Any
 
 
+@app.post("/v1/collections/{collection_name}", status_code=status.HTTP_201_CREATED)
+def add_collection(collection_name: str):
+    try:
+        itemsReadWriter.create_collection(collection_name)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"unexpected error happens: {e}"
+        )
+
+
 @app.post("/v1/collections/{collection_name}/items", status_code=status.HTTP_201_CREATED)
 def add_item(collection_name: str, request: AddItemRequest):
     try:
@@ -35,6 +46,17 @@ def get_item(collection_name: str, key: str, response: Response) -> Item | None:
         if item is None:
             response.status_code = status.HTTP_404_NOT_FOUND
         return item
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"unexpected error happens: {e}"
+        )
+
+
+@app.delete("/v1/collections/{collection_name}/items/{key}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_item(collection_name: str, key: str):
+    try:
+        itemsReadWriter.delete(collection_name, key)
     except Exception as e:
         raise HTTPException(
             status_code=500,

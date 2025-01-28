@@ -1,5 +1,9 @@
 
 class Storage():
+
+    def create_container(self, container: str) -> None:
+        raise NotImplementedError
+
     def write(self, container: str, key: str, data: bytes) -> None:
         raise NotImplementedError
 

@@ -1,6 +1,6 @@
 import json
 from typing import Any
-from collection.errors import DeleteError, GetError, SetError, CreateError, KeyNotFoundError
+from collection.errors import CreateCollectionError, DeleteError, GetError, SetError, CreateError, KeyNotFoundError
 from collection.item import Item, Metadata
 from shared.encode.json import JsonEncoder
 from storage.storage import Storage
@@ -20,6 +20,12 @@ class ReadWriter:
         self._storage_client = storage_cli_impl
         if clock_reader_impl is not None:
             self._clock_reader = clock_reader_impl
+
+    def create_collection(self, collection_name: str) -> None:
+        try:
+            self._storage_client.create_container(collection_name)
+        except Exception as e:
+            raise CreateCollectionError(e)
 
     def set(self, collection: str, key: str, value: Any):
         try:
