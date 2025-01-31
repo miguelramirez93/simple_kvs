@@ -1,14 +1,20 @@
+from abc import ABCMeta, abstractmethod
 
-class Storage():
 
+class Storage(metaclass=ABCMeta):
+
+    @abstractmethod
     def create_container(self, container: str) -> None:
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def write(self, container: str, key: str, data: bytes) -> None:
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def get(self, container: str, key: str) -> bytes:
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def delete(self, container: str, key: str) -> None:
-        raise NotImplementedError
+        pass

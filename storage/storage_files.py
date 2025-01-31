@@ -1,6 +1,6 @@
 import os
 from typing import override
-from storage.errors import ContainerNotFoundError, WriteError, ReadError, DataNotFoundError
+from storage.errors import ContainerNotFoundError, WriteError, ReadError, DataNotFoundError, DeleteError
 from storage.storage import Storage
 
 

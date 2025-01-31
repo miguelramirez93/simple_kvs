@@ -1,17 +1,18 @@
+import datetime
 from typing import override
 from unittest import TestCase, mock
-from storage.storage import Storage
-from storage.errors import DataNotFoundError
-from shared.date.clock import ClockReader
-from collection.read_writer import ReadWriter
+
+from collection.errors import GetError, KeyNotFoundError, SetError
 from collection.item import Item, Metadata
-from collection.errors import GetError, SetError, KeyNotFoundError
-import datetime
+from collection.read_writer import ReadWriter
+from shared.date.clock import ClockReader
+from storage.errors import DataNotFoundError
+from storage.storage import Storage
 
 
 class TestReadWriter(TestCase):
-    _storage_cli: Storage = Storage()
-    _clock_reader: ClockReader = ClockReader()
+    _storage_cli: Storage
+    _clock_reader: ClockReader
 
     _expected_date_time: datetime.datetime = datetime.datetime(2020, 5, 17)
     _expected_date_time_str: str = _expected_date_time.strftime(
@@ -23,8 +24,8 @@ class TestReadWriter(TestCase):
 
     @override
     def setUp(self):
-        self._storage_cli = Storage()
-        self._clock_reader = ClockReader()
+        self._storage_cli = mock.ANY
+        self._clock_reader = mock.ANY
 
     def test_should_get_data(self):
         self._storage_cli.get = mock.MagicMock(

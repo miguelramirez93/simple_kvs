@@ -1,7 +1,7 @@
-import shutil
 from unittest import TestCase, mock
+
+from storage.errors import DataNotFoundError, DeleteError, ReadError, WriteError
 from storage.storage_files import FilesStorage
-from storage.errors import WriteError, ReadError
 
 
 class TestFilesStorage(TestCase):
@@ -33,7 +33,7 @@ class TestFilesStorage(TestCase):
 
     def test_should_read_key_file_content(self):
         m = mock.mock_open(read_data=self._expected_file_content)
-        with mock.patch("builtins.open", m, create=True) as mocked_open:
+        with mock.patch("builtins.open", m, create=True):
             value = self.file_storage.get(self._expected_container_name, "key")
             self.assertEqual(value, self._expected_file_content)
 
@@ -49,3 +49,31 @@ class TestFilesStorage(TestCase):
             mocked_open.side_effect = IOError()
             with self.assertRaises(ReadError):
                 self.file_storage.get(self._expected_container_name, "key")
+
+    @mock.patch("os.remove")
+    def test_should_delete_key_ref_file(self, mock_remove):
+        self.file_storage.delete(
+            self._expected_container_name, "key")
+
+        mock_remove.assert_called_once_with(
+            f"{self._expected_files_path}/{self._expected_container_name}/key")
+
+    @mock.patch("os.remove")
+    def test_should_raise_delete_error(self, mock_remove):
+        mock_remove.side_effect = IOError()
+
+        with self.assertRaises(DeleteError):
+            self.file_storage.delete(
+                self._expected_container_name, "key")
+            mock_remove.assert_called_once_with(
+                f"{self._expected_files_path}/{self._expected_container_name}/key")
+
+    @mock.patch("os.remove")
+    def test_should_raise_DataNotFound_delete_error_when_key_file_not_found(self, mock_remove):
+        mock_remove.side_effect = FileNotFoundError()
+
+        with self.assertRaises(DataNotFoundError):
+            self.file_storage.delete(
+                self._expected_container_name, "key")
+            mock_remove.assert_called_once_with(
+                f"{self._expected_files_path}/{self._expected_container_name}/key")

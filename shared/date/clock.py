@@ -1,9 +1,11 @@
 import datetime
+from abc import ABCMeta, abstractmethod
 
 
-class ClockReader():
+class ClockReader(metaclass=ABCMeta):
+    @abstractmethod
     def now(self) -> datetime.datetime:
-        raise NotImplementedError
+        pass
 
 
 class DateTimeReader(ClockReader):

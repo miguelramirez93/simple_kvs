@@ -1,12 +1,13 @@
-from fastapi import FastAPI, HTTPException, Response, status
-from collection.item import Item
-from storage.storage_files import FilesStorage
-from collection.read_writer import ReadWriter
 from typing import Any
+
+from fastapi import Response, status
 from pydantic import BaseModel
 
-app = FastAPI()
-
+from collection.item import Item
+from collection.read_writer import ReadWriter
+from server.rest.errors import UnexpectedHTTPException
+from server.rest.middlewares import app
+from storage.storage_files import FilesStorage
 
 storage = FilesStorage()
 itemsReadWriter = ReadWriter(storage)
@@ -22,10 +23,7 @@ def add_collection(collection_name: str):
     try:
         itemsReadWriter.create_collection(collection_name)
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"unexpected error happens: {e}"
-        )
+        raise UnexpectedHTTPException(e)
 
 
 @app.post("/v1/collections/{collection_name}/items", status_code=status.HTTP_201_CREATED)
@@ -33,10 +31,7 @@ def add_item(collection_name: str, request: AddItemRequest):
     try:
         itemsReadWriter.set(collection_name, request.key, request.value)
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"unexpected error happens: {e}"
-        )
+        raise UnexpectedHTTPException(e)
 
 
 @app.get("/v1/collections/{collection_name}/items/{key}", status_code=status.HTTP_200_OK)
@@ -47,10 +42,7 @@ def get_item(collection_name: str, key: str, response: Response) -> Item | None:
             response.status_code = status.HTTP_404_NOT_FOUND
         return item
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"unexpected error happens: {e}"
-        )
+        raise UnexpectedHTTPException(e)
 
 
 @app.delete("/v1/collections/{collection_name}/items/{key}", status_code=status.HTTP_204_NO_CONTENT)
@@ -58,7 +50,4 @@ def delete_item(collection_name: str, key: str):
     try:
         itemsReadWriter.delete(collection_name, key)
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"unexpected error happens: {e}"
-        )
+        raise UnexpectedHTTPException(e)
