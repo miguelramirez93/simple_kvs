@@ -1,5 +1,7 @@
 import datetime
-from typing import override
+from concurrent.futures import ThreadPoolExecutor
+from threading import Thread
+from typing import Dict, override
 from unittest import TestCase, mock
 
 from collection.errors import GetError, KeyNotFoundError, SetError
@@ -8,6 +10,27 @@ from collection.read_writer import ReadWriter
 from shared.date.clock import ClockReader
 from storage.errors import DataNotFoundError
 from storage.storage import Storage
+
+
+class MemStorage(Storage):
+    _mem: Dict[str, dict] = {}
+
+    def create_container(self, container: str) -> None:
+        self._mem[container] = {}
+
+    def write(self, container: str, key: str, data: bytes) -> None:
+        self._mem[container][key] = data
+
+    def get(self, container: str, key: str) -> bytes:
+        try:
+            return self._mem[container][key]
+        except KeyError:
+            raise DataNotFoundError
+        except Exception as e:
+            raise e
+
+    def delete(self, container: str, key: str) -> None:
+        del self._mem[container][key]
 
 
 class TestReadWriter(TestCase):
@@ -127,3 +150,26 @@ class TestReadWriter(TestCase):
         with self.assertRaises(KeyNotFoundError):
             read_writer.delete("data", "foo")
             self._storage_cli.delete.assert_called_once_with("data", "foo")
+
+    def test_should_write_data_threadsafe(self):
+
+        expected_collection_name = "fake"
+
+        self._clock_reader.now = mock.MagicMock(
+            return_value=self._expected_date_time)
+
+        read_writer = ReadWriter(MemStorage(), self._clock_reader)
+
+        read_writer.create_collection(expected_collection_name)
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            for i in range(4):
+                executor.submit(
+                    read_writer.set, collection=expected_collection_name, key="foo", value=i)
+
+        stored_item = read_writer.get(expected_collection_name, "foo")
+
+        self.assertIsNotNone(stored_item)
+
+        if stored_item is not None:
+            self.assertEqual(stored_item.value, 3)
