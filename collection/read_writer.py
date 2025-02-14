@@ -1,16 +1,26 @@
 import json
+from threading import Lock
 from typing import Any
-from collection.errors import CreateCollectionError, DeleteError, GetError, SetError, CreateError, KeyNotFoundError
+
+from collection.errors import (
+    CreateCollectionError,
+    CreateError,
+    DeleteError,
+    GetError,
+    KeyNotFoundError,
+    SetError,
+)
 from collection.item import Item, Metadata
-from shared.encode.json import JsonEncoder
-from storage.storage import Storage
-from storage.errors import DataNotFoundError
 from shared.date.clock import ClockReader, DateTimeReader
+from shared.encode.json import JsonEncoder
+from storage.errors import DataNotFoundError
+from storage.storage import Storage
 
 
 class ReadWriter:
     _storage_client: Storage
     _clock_reader: ClockReader = DateTimeReader()
+    _locker: Lock = Lock()
 
     def __init__(
         self,
@@ -22,21 +32,23 @@ class ReadWriter:
             self._clock_reader = clock_reader_impl
 
     def create_collection(self, collection_name: str) -> None:
-        try:
-            self._storage_client.create_container(collection_name)
-        except Exception as e:
-            raise CreateCollectionError(e)
+        with self._locker:
+            try:
+                self._storage_client.create_container(collection_name)
+            except Exception as e:
+                raise CreateCollectionError(e)
 
     def set(self, collection: str, key: str, value: Any):
-        try:
-            stored_item = self.get(collection, key)
-            if stored_item is None:
-                self._create_item(collection, key, value)
-                return
-            self._update_item(collection, key, stored_item, value)
+        with self._locker:
+            try:
+                stored_item = self.get(collection, key)
+                if stored_item is None:
+                    self._create_item(collection, key, value)
+                    return
+                self._update_item(collection, key, stored_item, value)
 
-        except Exception as e:
-            raise SetError(e)
+            except Exception as e:
+                raise SetError(e)
 
     def _create_item(self, collection: str, key: str, value: Any):
         try:
@@ -72,9 +84,10 @@ class ReadWriter:
             raise GetError(e)
 
     def delete(self, collection: str, key: str):
-        try:
-            self._storage_client.delete(collection, key)
-        except DataNotFoundError:
-            raise KeyNotFoundError(key)
-        except Exception as e:
-            raise DeleteError(e)
+        with self._locker:
+            try:
+                self._storage_client.delete(collection, key)
+            except DataNotFoundError:
+                raise KeyNotFoundError(key)
+            except Exception as e:
+                raise DeleteError(e)
